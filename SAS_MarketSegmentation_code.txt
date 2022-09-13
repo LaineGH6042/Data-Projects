@@ -1,0 +1,446 @@
+filename bigrec "p:\FA15_Data.txt"  lrecl = 65576;
+
+/*  read in raw data to temporary sas data set mytemp */
+data mytemp;
+infile bigrec;
+input 
+
+myid 1-7
+
+/* target */
+
+iPhone_target 7986
+
+/* single driver variables */
+
+phone_switch_for_tech_alot     3856
+phone_switch_for_tech_altl     3880
+phone_switch_for_tech_neit     3928
+phone_switch_for_tech_dltl     3952
+phone_switch_for_tech_dlot     3976
+
+phone_social_world_alot  3857
+phone_social_world_altl  3881
+phone_social_world_neit  3929
+phone_social_world_dltl  3953
+phone_social_world_dlot  3977
+
+phone_self_expression_alot    3860
+phone_self_expression_altl    3884
+phone_self_expression_neit    3932
+phone_self_expression_dltl    3956
+phone_self_expression_dlot    3980
+
+phone_for_work_alot     3872
+phone_for_work_altl     3896
+phone_for_work_neit     3944
+phone_for_work_dltl     3968
+phone_for_work_dlot     3992
+
+/* descriptor variables */
+
+Samsung   7992
+Other     7994
+
+gender_male    2383
+gender_female  2384
+
+resp_hispaniclatn_yes    2371
+resp_hispaniclatn_no     2372
+
+tv_main_entmt_alot  5764
+tv_main_entmt_altl  5809
+tv_main_entmt_neit  5899
+tv_main_entmt_dltl  5944
+tv_main_entmt_dlot  5989
+
+radio_every_day_alot     5794
+radio_every_day_altl     5839
+radio_every_day_neit     5929
+radio_every_day_dltl     5974
+radio_every_day_dlot     6019
+
+newspaper_most_days_alot 5796
+newspaper_most_days_altl 5841
+newspaper_most_days_neit 5931
+newspaper_most_days_dltl 5976
+newspaper_most_days_dlot 6021
+
+social_media_ads_work_alot    6845
+social_media_ads_work_altl    6860
+social_media_ads_work_neit    6890
+social_media_ads_work_dltl    6905
+social_media_ads_work_dlot    6920
+
+trust_socmedia_prodinfo_alot  6853
+trust_socmedia_prodinfo_altl  6868
+trust_socmedia_prodinfo_neit  6898
+trust_socmedia_prodinfo_dltl  6913
+trust_socmedia_prodinfo_dlot  6928
+
+/* pca factor variables */
+
+/* career focus */
+
+career_over_family_time_alot  4618
+career_over_family_time_altl  4695
+career_over_family_time_neit  4849
+career_over_family_time_dltl  4926
+career_over_family_time_dlot  5003
+
+want_to_advance_alot   4628
+want_to_advance_altl   4705
+want_to_advance_neit   4859
+want_to_advance_dltl   4936
+want_to_advance_dlot   5013
+
+workaholic_alot     4626
+workaholic_altl     4703
+workaholic_neit     4857
+workaholic_dltl     4934
+workaholic_dlot     5011
+
+moneyEqualsSuccess_alot  4612
+moneyEqualsSuccess_altl  4689
+moneyEqualsSuccess_neit  4843
+moneyEqualsSuccess_dltl  4920
+moneyEqualsSuccess_dlot  4997
+
+/*consumer privacy concern*/
+
+like_knowing_info_uses_alot   7123
+like_knowing_info_uses_altl   7142
+like_knowing_info_uses_neit   7180
+like_knowing_info_uses_dltl   7199
+like_knowing_info_uses_dlot   7218
+
+want_control_over_my_info_alot  7127
+want_control_over_my_info_altl  7146
+want_control_over_my_info_neit  7184
+want_control_over_my_info_dltl  7203
+want_control_over_my_info_dlot  7222
+
+lookupCosB4ProvInfo_alot 7115
+lookupCosB4ProvInfo_altl 7134
+lookupCosB4ProvInfo_neit 7172
+lookupCosB4ProvInfo_dltl 7191
+lookupCosB4ProvInfo_dlot 7210
+
+wantSealOfApproval_alot  7121
+wantSealOfApproval_altl  7140
+wantSealOfApproval_neit  7178
+wantSealOfApproval_dltl  7197
+wantSealOfApproval_dlot  7211
+
+knowNegativeExpc_alot    7128
+knowNegativeExpc_altl    7147
+knowNegativeExpc_neit    7185
+knowNegativeExpc_dltl    7204
+knowNegativeExpc_dlot    7223
+
+;
+run;
+
+/* create five point scale variables */
+
+/* create formats */
+
+
+proc format;
+
+value scales
+     1 = ‘disagree a lot’
+     2 = ‘disagree a little’
+     3 = ‘neither agree nor disagree’
+     4 = ‘agree a little’
+     5 = ‘agree a lot’;
+
+value yesno
+     0 = 'no'
+     1 = 'yes';
+
+value gender_resp
+     0 = 'Female'
+     1 = 'Male';
+
+value ethnicity_resp
+     0 = 'Not Hispanic/Latino'
+     1 = 'Hispanic/Latino';
+
+run;
+
+/* new temp sas data set myvars from temp sas data set mytemp */
+/* construct 5 point scales */
+
+data 'Z:\MKT6971\SASdata\allVars';
+set mytemp; 
+
+if iPhone_target = . then iPhone = 0;
+if iPhone_target = 1 then iPhone = 1;
+
+/* single driver variables */
+
+if phone_switch_for_tech_alot  = 1 then phone_switch_for_tech_scale = 5;
+if phone_switch_for_tech_altl  = 1 then phone_switch_for_tech_scale = 4; 
+if phone_switch_for_tech_neit  = 1 then phone_switch_for_tech_scale = 3;
+if phone_switch_for_tech_dltl  = 1 then phone_switch_for_tech_scale = 2;
+if phone_switch_for_tech_dlot  = 1 then phone_switch_for_tech_scale = 1;
+
+if phone_social_world_alot  = 1 then phone_social_world_scale = 5;
+if phone_social_world_altl  = 1 then phone_social_world_scale = 4; 
+if phone_social_world_neit  = 1 then phone_social_world_scale = 3;
+if phone_social_world_dltl  = 1 then phone_social_world_scale = 2;
+if phone_social_world_dlot  = 1 then phone_social_world_scale = 1;
+
+if phone_self_expression_alot  = 1 then phone_self_expression_scale = 5;
+if phone_self_expression_altl  = 1 then phone_self_expression_scale = 4; 
+if phone_self_expression_neit  = 1 then phone_self_expression_scale = 3;
+if phone_self_expression_dltl  = 1 then phone_self_expression_scale = 2;
+if phone_self_expression_dlot  = 1 then phone_self_expression_scale = 1; 
+
+if phone_for_work_alot  = 1 then phone_for_work_scale = 5;
+if phone_for_work_altl  = 1 then phone_for_work_scale = 4; 
+if phone_for_work_neit  = 1 then phone_for_work_scale = 3;
+if phone_for_work_dltl  = 1 then phone_for_work_scale = 2;
+if phone_for_work_dlot  = 1 then phone_for_work_scale = 1; 
+
+/* descriptor variables */
+
+if Samsung = . then Samsung = 0;
+if Other = . then Other = 0;
+
+if gender_male = 1 then Gender = 1;
+if gender_female = 1 then Gender = 0;
+
+if resp_hispaniclatn_yes = 1 then Ethnicity = 1;
+if resp_hispaniclatn_no = 1 then Ethnicity = 0;
+
+if tv_main_entmt_alot  = 1 then tv_main_entmt_scale = 5;
+if tv_main_entmt_altl  = 1 then tv_main_entmt_scale = 4; 
+if tv_main_entmt_neit  = 1 then tv_main_entmt_scale = 3;
+if tv_main_entmt_dltl  = 1 then tv_main_entmt_scale = 2;
+if tv_main_entmt_dlot  = 1 then tv_main_entmt_scale = 1; 
+
+if radio_every_day_alot  = 1 then radio_every_day_scale = 5;
+if radio_every_day_altl  = 1 then radio_every_day_scale = 4; 
+if radio_every_day_neit  = 1 then radio_every_day_scale = 3;
+if radio_every_day_dltl  = 1 then radio_every_day_scale = 2;
+if radio_every_day_dlot  = 1 then radio_every_day_scale = 1; 
+
+if newspaper_most_days_alot  = 1 then newspaper_most_days_scale = 5;
+if newspaper_most_days_altl  = 1 then newspaper_most_days_scale = 4; 
+if newspaper_most_days_neit  = 1 then newspaper_most_days_scale = 3;
+if newspaper_most_days_dltl  = 1 then newspaper_most_days_scale = 2;
+if newspaper_most_days_dlot  = 1 then newspaper_most_days_scale = 1; 
+
+if social_media_ads_work_alot  = 1 then social_media_ads_work_scale = 5;
+if social_media_ads_work_altl  = 1 then social_media_ads_work_scale = 4; 
+if social_media_ads_work_neit  = 1 then social_media_ads_work_scale = 3;
+if social_media_ads_work_dltl  = 1 then social_media_ads_work_scale = 2;
+if social_media_ads_work_dlot  = 1 then social_media_ads_work_scale = 1; 
+
+if trust_socmedia_prodinfo_alot  = 1 then trust_socmedia_prodinfo_scale = 5;
+if trust_socmedia_prodinfo_altl  = 1 then trust_socmedia_prodinfo_scale = 4; 
+if trust_socmedia_prodinfo_neit  = 1 then trust_socmedia_prodinfo_scale = 3;
+if trust_socmedia_prodinfo_dltl  = 1 then trust_socmedia_prodinfo_scale = 2;
+if trust_socmedia_prodinfo_dlot  = 1 then trust_socmedia_prodinfo_scale = 1; 
+
+/* pca factor variables */
+
+/* career focus */
+
+if career_over_family_time_alot =1 then career_over_family_time_scale=5;
+if career_over_family_time_altl =1 then career_over_family_time_scale=4; 
+if career_over_family_time_neit =1 then career_over_family_time_scale=3;
+if career_over_family_time_dltl =1 then career_over_family_time_scale=2;
+if career_over_family_time_dlot =1 then career_over_family_time_scale=1;  
+
+if want_to_advance_alot  =1 then want_to_advance_scale=5;
+if want_to_advance_altl  =1 then want_to_advance_scale=4; 
+if want_to_advance_neit  =1 then want_to_advance_scale=3;  
+if want_to_advance_dltl  =1 then want_to_advance_scale=2;   
+if want_to_advance_dlot  =1 then want_to_advance_scale=1;
+
+if workaholic_alot =1 then workaholic_scale =5;
+if workaholic_altl =1 then workaholic_scale =4;
+if workaholic_neit =1 then workaholic_scale =3;
+if workaholic_dltl =1 then workaholic_scale =2;
+if workaholic_dlot =1 then workaholic_scale =1;
+
+if moneyEqualsSuccess_alot =1 then moneyEqualsSuccess_scale =5;
+if moneyEqualsSuccess_altl =1 then moneyEqualsSuccess_scale =4;
+if moneyEqualsSuccess_neit =1 then moneyEqualsSuccess_scale =3;
+if moneyEqualsSuccess_dltl =1 then moneyEqualsSuccess_scale =2;
+if moneyEqualsSuccess_dlot =1 then moneyEqualsSuccess_scale =1;
+
+
+/* consumer privacy */
+
+if like_knowing_info_uses_alot =1 then like_knowing_info_uses_scale=5; 
+if like_knowing_info_uses_altl =1 then like_knowing_info_uses_scale=4;
+if like_knowing_info_uses_neit =1 then like_knowing_info_uses_scale=3;
+if like_knowing_info_uses_dltl =1 then like_knowing_info_uses_scale=2;  
+if like_knowing_info_uses_dlot =1 then like_knowing_info_uses_scale=1;
+
+if want_control_over_my_info_alot =1 then want_control_over_my_info_scale=5; 
+if want_control_over_my_info_altl =1 then want_control_over_my_info_scale=4;
+if want_control_over_my_info_neit =1 then want_control_over_my_info_scale=3;
+if want_control_over_my_info_dltl =1 then want_control_over_my_info_scale=2;
+if want_control_over_my_info_dlot =1 then want_control_over_my_info_scale=1;
+
+if lookupCosB4ProvInfo_alot =1 then lookupCosB4ProvInfo_scale =5;
+if lookupCosB4ProvInfo_altl =1 then lookupCosB4ProvInfo_scale =4;
+if lookupCosB4ProvInfo_neit =1 then lookupCosB4ProvInfo_scale =3;
+if lookupCosB4ProvInfo_dltl =1 then lookupCosB4ProvInfo_scale =2;
+if lookupCosB4ProvInfo_dlot =1 then lookupCosB4ProvInfo_scale =1;
+
+if wantSealOfApproval_alot =1 then wantSealOfApproval_scale =5;
+if wantSealOfApproval_altl =1 then wantSealOfApproval_scale =4;
+if wantSealOfApproval_neit =1 then wantSealOfApproval_scale =3;
+if wantSealOfApproval_dltl =1 then wantSealOfApproval_scale =2;
+if wantSealOfApproval_dlot =1 then wantSealOfApproval_scale =1;
+
+if knowNegativeExpc_alot =1 then knowNegativeExpc_scale =5;
+if knowNegativeExpc_altl =1 then knowNegativeExpc_scale =4;
+if knowNegativeExpc_neit =1 then knowNegativeExpc_scale =3;
+if knowNegativeExpc_dltl =1 then knowNegativeExpc_scale =2;
+if knowNegativeExpc_dlot =1 then knowNegativeExpc_scale =1;
+
+
+/*  attach labels to variables */
+
+label phone_switch_for_tech_scale =
+"I would switch cell phone service providers for the latest tech";
+
+label phone_social_world_scale =
+"My phone connects me to my social world";
+
+label phone_self_expression_scale =
+"My phone is an expression of who I am";
+
+label phone_for_work_scale =
+"My phone should help me get work done";
+
+label tv_main_entmt_scale =
+"TV is my main source of entertainment";
+
+label radio_every_day_scale =
+"I listen to the radio every day";
+
+label newspaper_most_days_scale =
+"I read a newspaper most days";
+
+label social_media_ads_work_scale =
+"I am more likely to buy products advertised on social media";
+
+label trust_socmedia_prodinfo_scale =
+"I trust product information from social media more than other sources";
+
+label career_over_family_time_scale = 
+"I am willing to sacrifice time with my family in order to get ahead";
+
+label want_to_advance_scale = 
+"I want to get to the very top in my career"; 
+
+label workaholic_scale =
+"I am a workaholic";
+
+label moneyEqualsSuccess_scale =
+"Money is the best measure of success";
+
+
+label like_knowing_info_uses_scale = 
+"I like knowing how companies are using information about me";
+
+label want_control_over_my_info_scale = 
+"I want more personal control over information that companies might have about me";
+
+label lookupCosB4ProvInfo_scale =
+"I look up companies and organizations online before giving my personal information";
+
+label wantSealOfApproval_scale =
+"I would feel more comfortable providing personal information to companies that display a trusted seal of approval";
+
+label knowNegativeExpc_scale =
+"I know many people who have had something negative happen to them because of personal information available online";
+
+/* attach format values for each variable */
+
+format
+
+/* single driver 5pt variables */
+
+phone_switch_for_tech_scale
+phone_social_world_scale
+phone_self_expression_scale
+phone_for_work_scale
+
+/* descriptor variables */
+
+tv_main_entmt_scale
+radio_every_day_scale
+newspaper_most_days_scale
+social_media_ads_work_scale
+trust_socmedia_prodinfo_scale
+
+/* pca variables */
+
+career_over_family_time_scale
+want_to_advance_scale
+workaholic_scale
+moneyEqualsSuccess_scale
+
+like_knowing_info_uses_scale
+want_control_over_my_info_scale
+lookupCosB4ProvInfo_scale
+wantSealOfApproval_scale
+knowNegativeExpc_scale
+
+scales.
+
+iPhone
+Samsung
+Other
+yesno.
+
+Gender
+gender_resp.
+
+Ethnicity
+ethnicity_resp.
+;
+
+run;
+
+proc factor data = Allvars 
+maxiter=100
+method=principal
+mineigen=1
+rotate=varimax
+scree
+score
+print
+nfactors=8
+out=myscores;
+
+var 
+career_over_family_time_scale
+want_to_advance_scale
+workaholic_scale
+moneyEqualsSuccess_scale
+
+like_knowing_info_uses_scale
+want_control_over_my_info_scale
+lookupCosB4ProvInfo_scale
+wantSealOfApproval_scale
+knowNegativeExpc_scale
+;
+run;
+
+/* rename the factor variables */
+data 'Z:\MKT6971\SASdata\PCAvars';
+set myscores;
+rename factor1 = Career_Focus;
+rename factor2 = Consumer_Privacy;
+rename myid = resp_id;
+run; 
