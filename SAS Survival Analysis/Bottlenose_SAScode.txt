@@ -1,0 +1,24 @@
+data Work.Bottlenose;
+      infile bottlenose;
+      input Location 7 Days 3 Event 4 Origin 8;
+run;
+
+ods rtf file="Z:\DA6213\BottlenoseSA.docx" style=journal;
+ods graphics on;
+ods trace on;
+
+proc lifetest data=bottlenose plots=survival(atrisk=0 to 23000 by 1000);
+      time Days * Event(0);
+      strata Location / test=logrank adjust=sidak;
+run;
+
+ods rtf file="Z:\DA6213\BottlenoseCox.docx" style=journal;
+proc phreg data=bottlenose plot(overlay)=survival;
+      Class Origin;
+      model Days*Event(0)=Origin;
+run;
+ods rtf close;
+
+ods trace off;
+ods graphics off;
+ods rtf close;
