@@ -1,0 +1,369 @@
+---
+title: "Intrusion Detection"
+author: "Laine Cripe"
+date: "5/7/2022"
+output: 
+  html_document:
+    toc: true
+    theme: sandstone
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+```
+
+
+## Libraries
+
+```{r}
+library(car) #vif
+library(dplyr)
+library(ROCR)
+library(caret)
+library(tree)
+library(h2o)
+library(lime)
+```
+
+
+## Data Processing
+
+```{r flows, cache=TRUE}
+flows <- read.csv('BotNeTIoT-L01_label_NoDuplicates.csv')
+```
+
+```{r}
+str(flows)
+```
+
+```{r}
+colSums(is.na(flows))
+```
+
+```{r}
+table(flows$label)
+```
+
+```{r}
+flows$label <- as.factor(flows$label)
+```
+
+
+
+```{r}
+plot(flows[1:500,"H_L0.1_weight"],flows[1:500,"HH_L0.1_weight"],
+     col='steelblue', pch=19,
+     xlab="All Traffic Weight", ylab="Conversation Traffic Weight")
+```
+
+
+
+### Training and Testing Split
+
+```{r}
+set.seed(1)
+trainID <- sample(nrow(flows), .7*nrow(flows), replace=FALSE)
+flow.train <- flows[trainID,c(2:25)]
+flow.test <- flows[-trainID,c(2:25)]
+```
+
+
+```{r}
+flows$splitsets <- rep("test",nrow(flows))
+flows[trainID,"splitsets"] <- "train"
+```
+
+```{r}
+table(flows$splitsets,flows$label)
+```
+
+```{r}
+153899 / nrow(flow.test)
+359598 / nrow(flow.train)
+```
+
+
+```{r}
+boxplot(flows$MI_dir_L0.1_weight ~ flows$splitsets)
+```
+
+
+```{r}
+boxplot(flows$HH_L0.1_weight ~ flows$label, col='slategray2',
+        xlab='Label', ylab='Conversation Traffic Weight')
+```
+
+
+
+
+
+
+## Logistic Regression
+
+```{r logreg, cache=TRUE}
+log.all <- glm(label ~ ., data=flow.train, family=binomial)
+summary(log.all)
+```
+
+```{r}
+flow.train <- flow.train[,c(7:13,15:24)] # remove MI, H, HH_jit_weight
+```
+
+
+```{r m1logReg, cache=TRUE}
+m1.log <- glm(label ~ ., data=flow.train, family=binomial)
+summary(m1.log)
+```
+
+
+```{r m1vif, cache=TRUE}
+# library(car)
+vif(m1.log)
+```
+
+```{r}
+flow.train <- flow.train[,c(2:17)] # remove HH_L0.1_weight
+```
+
+```{r m2LogReg, cache=TRUE}
+m2.log <- glm(label ~ ., data=flow.train, family=binomial)
+summary(m2.log)
+```
+
+
+```{r}
+vif(m2.log)
+```
+
+```{r m3LogReg, cache=TRUE}
+flow.train <- flow.train[,c(2:16)] # remove HH_L0.1_mean
+
+m3.log <- glm(label ~ ., data=flow.train, family=binomial)
+vif(m3.log)
+```
+
+```{r m4LogReg, cache=TRUE}
+flow.train <- flow.train[,c(1:10,12:15)] # remove HpHp_L0.1_magnitude
+
+m4.log <- glm(label ~ ., data=flow.train, family=binomial)
+vif(m4.log)
+```
+
+
+```{r m5LogReg, cache=TRUE}
+flow.train <- flow.train[,c(1:10,12:14)] # remove HpHp_L0.1_radius
+
+m5.log <- glm(label ~ ., data=flow.train, family=binomial)
+vif(m5.log)
+```
+
+```{r m6LogReg, cache=TRUE}
+flow.train <- flow.train[,c(1:8,10:13)] # remove HpHp_L0.1_mean
+
+m6.log <- glm(label ~ ., data=flow.train, family=binomial)
+vif(m6.log)
+```
+
+
+```{r m7LogReg, cache=TRUE}
+flow.train <- flow.train[,c(1:9,11:12)] # remove HpHp_L0.1_covariance
+
+m7.log <- glm(label ~ ., data=flow.train, family=binomial)
+vif(m7.log)
+```
+
+
+```{r}
+boxplot(flow.train$HH_L0.1_pcc ~ flow.train$label)
+```
+
+
+```{r}
+cor(flow.train$HH_L0.1_pcc, flow.train$HpHp_L0.1_pcc)
+```
+
+
+```{r}
+boxplot(flow.train$HpHp_L0.1_pcc ~ flow.train$label)
+```
+
+
+
+```{r}
+flow.train$abs_HH_pcc <- abs(flow.train$HH_L0.1_pcc)
+flow.test$abs_HH_pcc <- abs(flow.test$HH_L0.1_pcc)
+
+flow.train$abs_HpHp_pcc <- abs(flow.train$HpHp_L0.1_pcc)
+flow.test$abs_HpHp_pcc <- abs(flow.test$HpHp_L0.1_pcc)
+```
+
+
+```{r}
+flow.train <- flow.train[,c(1:4,6:9,11:13)] # remove pcc vars
+```
+
+
+
+```{r}
+mfinal.log <- glm(label ~ ., data=flow.train,
+                  family=binomial)
+summary(mfinal.log)
+```
+
+
+```{r}
+vif(mfinal.log)
+```
+
+
+
+```{r}
+boxplot(flow.train$HH_L0.1_std ~ flow.train$label)
+```
+
+
+
+### Logistic Regression Predictions
+
+```{r}
+lr.probs <- predict(mfinal.log, flow.test, type='response')
+```
+
+
+```{r}
+summary(lr.probs)
+```
+
+
+
+### Logistic Regression Performance
+
+```{r}
+lr.preds <- ifelse(lr.probs > .5, 1, 0)
+lr.cm <- confusionMatrix(as.factor(lr.preds), flow.test$label)
+lr.cm
+```
+
+
+```{r}
+lr.acc <- round(lr.cm$overall[["Accuracy"]],4)*100
+lr.ppv <- round(lr.cm$byClass[["Neg Pred Value"]],4)*100
+```
+
+
+
+
+
+
+## Decision Tree
+
+```{r tree1, cache=TRUE}
+set.seed(1)
+tree.m1 <- tree(label ~ ., data=flow.train)
+
+tree.cv <- cv.tree(tree.m1, FUN=prune.tree)
+plot(tree.cv$size, tree.cv$dev, type='b',
+     xlab='Tree Size', ylab='Deviance')
+```
+
+
+```{r treeplot1, cache=TRUE}
+tree.prune <- prune.tree(tree.m1, best=2)
+plot(tree.prune)
+text(tree.prune, font=2)
+```
+
+
+```{r tree2, cache=TRUE}
+set.seed(1)
+tree.m2 <- tree(label ~ . -HpHp_L0.1_weight, data=flow.train)
+
+tree.cv2 <- cv.tree(tree.m2, FUN=prune.tree)
+plot(tree.cv2$size, tree.cv2$dev, type='b',
+     xlab='Tree Size', ylab='Deviance')
+```
+
+
+```{r treeplot2, cache=TRUE}
+tree.prune2 <- prune.tree(tree.m2, best=8)
+plot(tree.prune2)
+text(tree.prune2, font=2, cex=.6)
+```
+
+
+
+### Decision Tree Performance
+
+
+```{r}
+prune1.probs <- predict(tree.prune, newdata=flow.test)
+prune1.preds <- ifelse(prune1.probs[,"1"] > prune1.probs[,"0"], 1, 0)
+```
+
+```{r}
+tree1.cm <- confusionMatrix(as.factor(prune1.preds), flow.test$label)
+tree1.cm
+```
+
+
+```{r}
+prune.probs <- predict(tree.prune2, newdata=flow.test)
+prune.preds <- ifelse(prune.probs[,"1"] > prune.probs[,"0"], 1, 0)
+```
+
+```{r}
+tree.cm <- confusionMatrix(as.factor(prune.preds), flow.test$label)
+tree.cm
+```
+
+
+```{r}
+tree.acc <- round(tree.cm$overall[["Accuracy"]],4)*100
+tree.ppv <- round(tree.cm$byClass[["Neg Pred Value"]],4)*100
+```
+
+
+
+
+
+## Gradient Boosting Machines
+
+```{r}
+h2o.no_progress()
+h2o.init(max_mem_size="5g")
+```
+
+
+```{r}
+y <- "label"
+train.features <- flow.train[,c(1:8,10:11)]
+x <- setdiff(names(train.features), y)
+```
+
+
+```{r boost1, cache=TRUE}
+train.h2o <- as.h2o(flow.train)
+
+h2o.fit1 <- h2o.gbm(x=x, y=y, training_frame=train.h2o, nfolds=5)
+h2o.fit1
+```
+
+
+```{r}
+h2o.fit2 <- h2o.gbm(x=x, y=y, training_frame = train.h2o,
+                    nfolds=5, ntrees=5000, stopping_rounds=5,
+                    seed=1)
+h2o.fit2
+```
+
+
+```{r}
+h2o.varimp_plot(h2o.fit2)
+```
+
+
+
+
+
